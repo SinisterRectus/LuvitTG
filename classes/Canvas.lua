@@ -3,16 +3,9 @@ local clear = require('table.clear')
 
 local Vector2 = require('./Vector2')
 local Transform2 = require('./Transform2')
+local FrameBuffer = require('./FrameBuffer')
 
 local stdout = process.stdout.handle
-
-local ESC = string.char(27)
-local CSI = ESC .. '['
-local COLOR_FG = CSI .. '38;2;%i;%i;%im'
-local COLOR_BG = CSI .. '48;2;%i;%i;%im'
-local RESET_FG = CSI .. '39m'
-local RESET_BG = CSI .. '49m'
-local RESET = CSI .. '0m'
 
 local NEWLINE = '\n'
 local SPACE = ' '
@@ -118,35 +111,23 @@ end
 
 function Canvas:getSize()
 	local cols, rows = stdout:get_winsize()
-	return Vector2(cols * self.pixelClass.width - 1, rows * self.pixelClass.height - 1)
+	return Vector2(cols * self.pixelClass.width, rows * self.pixelClass.height)
 end
 
 function Canvas:getFrame()
-	local buf = utils.buffer()
-	local prev_fg, prev_bg = nil, nil
-	local function add(char, fg, bg)
-		if fg ~= prev_fg then
-			buf(fg and string.format(COLOR_FG, fg:toRGB()) or RESET_FG)
-			prev_fg = fg
-		end
-		if bg ~= prev_bg then
-			buf(bg and string.format(COLOR_BG, bg:toRGB()) or RESET_BG)
-			prev_bg = bg
-		end
-		buf(char or SPACE)
-	end
+	local buf = FrameBuffer()
 	local cols, rows = stdout:get_winsize()
 	for row = 1, rows do
 		for col = 1, cols do
 			if self.pixels[row][col] then
-				add(self.pixels[row][col]:getState())
+				buf:add(self.pixels[row][col]:getState())
 			else
-				add(SPACE)
+				buf:add(SPACE)
 			end
 		end
-		add(NEWLINE)
+		buf:add(NEWLINE)
 	end
-	buf(RESET)
+	buf:close()
 	return buf
 end
 
