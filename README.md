@@ -15,4 +15,3 @@ See also:
 - https://github.com/asciimoo/drawille
 - https://github.com/asciimoo/lua-drawille
 - https://github.com/madbence/node-drawille
-
